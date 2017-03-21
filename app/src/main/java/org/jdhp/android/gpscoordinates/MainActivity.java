@@ -7,21 +7,13 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.io.IOException;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.Date;
-import java.util.Locale;
-
-import static android.R.attr.permission;
+import static org.jdhp.android.gpscoordinates.CoordinatesFormat.formatDMSCoordinates;
+import static org.jdhp.android.gpscoordinates.CoordinatesFormat.formatDecimalCoordinates;
 
 /*
  * Doc:
@@ -34,12 +26,19 @@ import static android.R.attr.permission;
  * TODO
  * - "menu / copy" to copy to clipboard the current GPS position
  * - "menu / send" to send the current GPS position (mail, sms, tweet, ...)
- * - Option to choose the "Coordinate System": "Decimal" or "Sexigesimal"
+ * - Option to choose the "Coordinate System": "Decimal" or "Sexigesimal" (aka "DMS")
  * - Add altitude ?
  * - Add detailed low level GPS status (num satellites, signal strength, ...)
  */
 
 public class MainActivity extends AppCompatActivity {
+
+    /*
+     * This tag will be used for logging. It is best practice to use the class's name using
+     * getSimpleName as that will greatly help to identify the location from which your logs are
+     * being posted.
+     */
+    private static final String LOG_TAG = MainActivity.class.getSimpleName();
 
     static int GPS_PERMISSION_REQUEST_ID = 1;            // An integer request code that is used to identify this permission request
 
@@ -62,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
              * - https://developer.android.com/training/permissions/requesting.html
              */
 
-            Log.i(MainActivity.class.getName(), "Request the missing permission");
+            Log.i(LOG_TAG, "Request the missing permission");
 
             // Request the missing permissions
             String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
@@ -70,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
 
         } else {
 
-            Log.i(MainActivity.class.getName(), "Permission granted");
+            Log.i(LOG_TAG, "Permission granted");
             requestLocation();
 
         }
@@ -82,12 +81,14 @@ public class MainActivity extends AppCompatActivity {
             // If request is cancelled, the result arrays are empty
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                Log.i(MainActivity.class.getName(), "Permission granted");
+                Log.i(LOG_TAG, "Permission granted");
                 requestLocation();
 
             } else {
+
                 // permission denied, boo! Disable the
-                // functionality that depends on this permission.
+                // functionality that depends on this permission
+
             }
             return;
         }
@@ -95,81 +96,38 @@ public class MainActivity extends AppCompatActivity {
 
     private void requestLocation() {
 
-        // Make the format object to well format GPS coordinate figures
-        Locale locale = new Locale("en", "US");
-        DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols(locale);
-        final DecimalFormat gpsDecimalFormat = new DecimalFormat("#.######", decimalFormatSymbols);
-
         // Get the location manager
         final LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         // GPS Service
         if (locationManager != null) {
-            Log.i(MainActivity.class.getName(), "locationManager != null");
+            Log.i(LOG_TAG, "locationManager != null");
 
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationListener() { // TODO
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationHandler(tvGpsCoordinates));
 
-                public void onStatusChanged(String provider, int status, Bundle extras) {
-                    Log.v(MainActivity.class.getName(), "StatusChanged");
-                    // TODO
-                }
-
-                public void onProviderEnabled(String provider) {
-                    // GPS ON
-                    Log.v(MainActivity.class.getName(), "ProviderEnabled (GPS ON)");
-
-                    //String toastMessage = "GPS turned ON";
-                    //Toast.makeText(this, toastMessage, Toast.LENGTH_SHORT).show();
-
-                    // TODO
-                }
-
-                public void onProviderDisabled(String provider) {
-                    // GPS OFF
-                    Log.v(MainActivity.class.getName(), "ProviderDisabled (GPS OFF)");
-
-                    //String toastMessage = "GPS turned ON";
-                    //Toast.makeText(this, toastMessage, Toast.LENGTH_SHORT).show();
-
-                    // TODO
-                }
-
-                public void onLocationChanged(Location location) {
-                    // GPS position updated
-                    Log.v(MainActivity.class.getName(), "LocationChanged (GPS position updated)");
-
-                    double latitude = location.getLatitude();
-                    double longitude = location.getLongitude();
-                    //location.getAltitude();
-
-                    String gpsCoordinatesString = gpsDecimalFormat.format(latitude) + " : " + gpsDecimalFormat.format(longitude);
-
-                    Log.v(MainActivity.class.getName(), gpsCoordinatesString);
-
-                    tvGpsCoordinates.setText(gpsCoordinatesString);
-                }
-            });
-
+            /*
             // GpsStatusListener
-            //        	locationManager.addGpsStatusListener(new GpsStatus.Listener() {
-            //
-            //				public void onGpsStatusChanged(int event) {
-            //					if(event == GpsStatus.GPS_EVENT_SATELLITE_STATUS) {
-            //						GpsStatus gpsStatus = locationManager.getGpsStatus(null);
-            //						Iterable<GpsSatellite> iterable = gpsStatus.getSatellites();
-            //
-            //						int cpt = 0;
-            //						for(GpsSatellite satellite : iterable) {
-            //							System.out.println("- " + satellite.toString());
-            //							cpt++;
-            //						}
-            //						System.out.println(cpt + " satellites found.");
-            //					}
-            //				}
-            //
-            //        	});
+            locationManager.addGpsStatusListener(new GpsStatus.Listener() {
+
+                public void onGpsStatusChanged(int event) {
+                    if (event == GpsStatus.GPS_EVENT_SATELLITE_STATUS) {
+                        GpsStatus gpsStatus = locationManager.getGpsStatus(null);
+                        Iterable<GpsSatellite> iterable = gpsStatus.getSatellites();
+
+                        int cpt = 0;
+                        for (GpsSatellite satellite : iterable) {
+                            System.out.println("- " + satellite.toString());
+                            cpt++;
+                        }
+                        System.out.println(cpt + " satellites found.");
+                    }
+                }
+
+            });
+            */
+
         } else {
-            Log.i(MainActivity.class.getName(), "locationManager == null");
+            Log.i(LOG_TAG, "locationManager == null");
             // TODO
         }
     }
