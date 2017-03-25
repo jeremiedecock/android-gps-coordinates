@@ -17,7 +17,7 @@ public class CoordinatesFormat {
      *
      */
     public static String formatDecimalCoordinate(double coordinate) {
-        return String.format("%.6f", coordinate);
+        return String.format("%.7f", coordinate);
     }
 
     /*
