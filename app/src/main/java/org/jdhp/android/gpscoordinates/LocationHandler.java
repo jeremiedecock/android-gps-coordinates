@@ -6,11 +6,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
+import static org.jdhp.android.gpscoordinates.CoordinatesFormat.formatAltitude;
 import static org.jdhp.android.gpscoordinates.CoordinatesFormat.formatDMSCoordinates;
-import static org.jdhp.android.gpscoordinates.CoordinatesFormat.formatDecimalCoordinates;
+import static org.jdhp.android.gpscoordinates.CoordinatesFormat.formatLatitude;
+import static org.jdhp.android.gpscoordinates.CoordinatesFormat.formatLongitude;
 
 /**
- * Created by jdecock on 21/03/2017.
+ * Created by Jérémie Decock (www.jdhp.org) on 21/03/2017.
  */
 
 public class LocationHandler implements LocationListener {
@@ -20,11 +22,13 @@ public class LocationHandler implements LocationListener {
      * getSimpleName as that will greatly help to identify the location from which your logs are
      * being posted.
      */
-    private static final String LOG_TAG = MainActivity.class.getSimpleName();
+    private static final String LOG_TAG = LocationHandler.class.getSimpleName();
 
+    private TextView tvDmsCoordinates;
     private TextView tvGpsCoordinates;
 
-    public LocationHandler(TextView tvGpsCoordinates) {
+    public LocationHandler(TextView tvDmsCoordinates, TextView tvGpsCoordinates) {
+        this.tvDmsCoordinates = tvDmsCoordinates;
         this.tvGpsCoordinates = tvGpsCoordinates;
     }
 
@@ -61,12 +65,14 @@ public class LocationHandler implements LocationListener {
         double longitude = location.getLongitude();
         double altitude = location.getAltitude();
 
-        String gpsCoordinatesString = "Latitude : Longitude : Altitude";
-        gpsCoordinatesString += "\n\n" + formatDecimalCoordinates(latitude, longitude, altitude);
-        gpsCoordinatesString += "\n\n" + formatDMSCoordinates(latitude, longitude, altitude);
+        String dmsCoordinatesString = formatDMSCoordinates(latitude, longitude);
+        Log.v(LOG_TAG, dmsCoordinatesString);
+        this.tvDmsCoordinates.setText(dmsCoordinatesString);
 
+        String gpsCoordinatesString =  "Latitude: " + formatLatitude(latitude) + "\n";
+        gpsCoordinatesString += "Longitude: " + formatLongitude(longitude) + "\n";
+        gpsCoordinatesString += "Altitude: " + formatAltitude(altitude) + "\n";
         Log.v(LOG_TAG, gpsCoordinatesString);
-
         this.tvGpsCoordinates.setText(gpsCoordinatesString);
     }
 }

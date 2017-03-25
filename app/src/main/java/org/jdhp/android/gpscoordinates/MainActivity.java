@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
 
     static int GPS_PERMISSION_REQUEST_ID = 1;            // An integer request code that is used to identify this permission request
 
+    TextView tvDmsCoordinates;
     TextView tvGpsCoordinates;
 
     @Override
@@ -49,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        tvDmsCoordinates = (TextView) findViewById(R.id.tv_dms_coordinates);
         tvGpsCoordinates = (TextView) findViewById(R.id.tv_gps_coordinates);
 
         // Check For Permissions
@@ -103,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
         if (locationManager != null) {
             Log.i(LOG_TAG, "locationManager != null");
 
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationHandler(tvGpsCoordinates));
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationHandler(tvDmsCoordinates, tvGpsCoordinates));
 
             /*
             // GpsStatusListener
