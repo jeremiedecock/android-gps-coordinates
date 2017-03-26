@@ -48,7 +48,7 @@ public class CoordinatesFormat {
 
         String degreesStr = Integer.toString(degreesInt);
         String minutesStr = String.format("%02d", minutesInt);
-        String secondesStr = String.format("%02.2f", secondesDecimal);
+        String secondesStr = String.format("%05.2f", secondesDecimal);
 
         return signStr + degreesStr + "°" + minutesStr + "'" + secondesStr + "\"";
     }
